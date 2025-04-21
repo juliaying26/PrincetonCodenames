@@ -1,0 +1,6 @@
+Flask
+psycopg2
+SQLAlchemy
+python-dotenv
+gunicorn
+gensim
