@@ -9,6 +9,7 @@ board = codenames.CodenamesBoard(0.25)
 rounds = 2
 curr_round = 0
 session_id = str(uuid.uuid4())
+log = ""
 
 # # Initialize persistent log display
 # display(HTML("""
@@ -19,14 +20,8 @@ session_id = str(uuid.uuid4())
 # """))
 
 def append_to_log(message):
-    # Send a JS command to append to the #log div
-    js = f"""
-    const logDiv = document.getElementById("log");
-    const newEntry = document.createElement("div");
-    newEntry.innerHTML = `{message}`;
-    logDiv.appendChild(newEntry);
-    """
-    # display(Javascript(js))
+    global log
+    log += message + "\n"
 
 
 def check_game_over():
@@ -35,22 +30,6 @@ def check_game_over():
         append_to_log("<b style='color:red;'>Game Over!</b>")
         return True
     return False
-
-# Python function to be triggered from JS
-def submit_guesses(guesses):
-    global curr_round
-    append_to_log(f"<p>Your guesses: {guesses}</p>")
-    msg = board.team_guesses(guesses)
-    append_to_log(msg)
-    curr_round += 1
-    opposing_team_round()
-
-# output.register_callback(f'notebook.submitGuesses_{session_id}', submit_guesses)
-
-@app.route('/api/getboard', methods=['GET'])
-def get_board():
-    print(board.get_board())
-    return jsonify(board.get_board())
 
 @app.route('/api/opponentplays', methods=['POST'])
 def opposing_team_round():
@@ -63,19 +42,41 @@ def opposing_team_round():
     append_to_log(msg)
     my_team_clue()
 
-def my_team_clue():
+# output.register_callback(f'notebook.submitGuesses_{session_id}', submit_guesses)
+
+@app.route('/api/getboard', methods=['GET'])
+def get_board():
+    return jsonify(board.get_board())
+
+@app.route('/api/getdropdownoptions', methods=['GET'])
+def get_dropdown_options():
+    print("REMAINING", board.remaining_cards())
+    return board.remaining_cards()
+
+@app.route('/api/guessword', methods=['POST'])
+def guess_word():
     global curr_round
     # clear_output()
     # display(Javascript('document.getElementById("input-area").innerHTML = "";'))
 
     if check_game_over():
-        return
+        return jsonify({"game_over": True})
 
+    print("hit /api/guessword")  # make sure this shows up
+    data = request.get_json()
+    print("data received:", data)  # see what the frontend sent
+    guess = data.get('word')
+
+    append_to_log(f"<p>Your guesses: {guess}</p>")
+    msg = board.team_guesses(guess)
+    append_to_log(msg)
+    curr_round += 1
+    return jsonify({"message": msg})
+
+@app.route('/api/getclue', methods=["GET"])
+def get_clue():
     clue, clue_size = board.get_clue()
-    words_on_board = board.remaining_cards()
-    options = words_on_board + ['no additional guesses this round']
-
-# @app.route('/api/myteamplays',)
+    return jsonify({"clue": clue, "clue_size": clue_size})
 
 @app.route('/', methods=['GET'])
 def index():

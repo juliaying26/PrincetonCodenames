@@ -30,8 +30,8 @@ class CodenamesBoard:
     # shuffle to choose assassin, teams, etc
     random.shuffle(chosen_words)
     self._assassin = chosen_words[0:1] # worst word (ends game in a loss)
-    self._team = chosen_words[1:10] # all remaining words for this team
-    self._opponents = chosen_words[10:18] # all remaining words for opponent's team
+    self._team = chosen_words[1:10] # all 9 remaining words for this team
+    self._opponents = chosen_words[10:18] # all 8 remaining words for opponent's team
     self._neutral = chosen_words[18:25] # all remaining neutral words
 
     self._team_copy = self._team.copy()
@@ -171,40 +171,44 @@ class CodenamesBoard:
     return '', 0
 
   # respond to a user's guess (remove guessed card from lists)
-  def team_guesses(self, guesses):
+  def team_guesses(self, guess):
     msg = ''
-    for guess in guesses:
-      if guess == 'no additional guesses this round': break
+    if guess == 'no additional guesses this round':
+      msg += 'No additional guesses this round.\n'
+      return msg
 
-      # remove guess from remaining board (replacing with '')
-      self._remaining_board = ['' if item == guess else item for item in self._remaining_board]
+    # remove guess from remaining board (replacing with '')
+    self._remaining_board = ['' if item == guess else item for item in self._remaining_board]
 
-      lower_guess = guess.lower().replace(' ', '_')
+    lower_guess = guess.lower().replace(' ', '_')
 
-      # handle correct case
-      if lower_guess in self._team:
-        self._team.remove(lower_guess)
-        # print(f'{guess} was correct!')
-        msg += f'{guess} was correct!\n'
-      # handle opponent case
-      elif lower_guess in self._opponents:
-        self._opponents.remove(lower_guess)
-        # print(f'{guess} was for the opposing team!')
-        msg += f'{guess} was for the opposing team!\n'
-        # end round without checking other guesses
-        break
-      # handle neutral case
-      elif lower_guess in self._neutral:
-        # print(f'{guess} was a bystander!')
-        msg += f'{guess} was a bystander!\n'
-        self._neutral.remove(lower_guess)
-        break
-      # handle assassin case
-      elif lower_guess in self._assassin:
-        msg += f'GAME OVER (assassin found): COMPUTER WINS\n'
-        # print(f'GAME OVER (assassin found): COMPUTER WINS')
-        self.game_over = True
-        break
+    # handle correct case
+    if lower_guess in self._team:
+      self._team.remove(lower_guess)
+      # print(f'{guess} was correct!')
+      msg += f'{guess} was correct!\n'
+    # handle opponent case
+    elif lower_guess in self._opponents:
+      self._opponents.remove(lower_guess)
+      # print(f'{guess} was for the opposing team!')
+      msg += f'{guess} was for the opposing team!\n'
+      # end round without checking other guesses
+      return msg
+    
+    # handle neutral case
+    elif lower_guess in self._neutral:
+      # print(f'{guess} was a bystander!')
+      msg += f'{guess} was a bystander!\n'
+      self._neutral.remove(lower_guess)
+      return msg
+    
+    # handle assassin case
+    elif lower_guess in self._assassin:
+      msg += f'GAME OVER (assassin found): COMPUTER WINS\n'
+      # print(f'GAME OVER (assassin found): COMPUTER WINS')
+      self.game_over = True
+      return msg
+    
     return msg
 
   # create a clue for the opponent
