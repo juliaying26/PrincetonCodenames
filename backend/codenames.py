@@ -48,98 +48,95 @@ class CodenamesBoard:
     self._remaining_board = chosen_words # all remaining cards in game
     self._board_copy = self._remaining_board.copy()
 
-  # print remaining cards in 5x5 grid (and return a list of cards)
-  def remaining_cards(self):
-    # convert to grid format and print
-    grid = [self._board_copy[i:i+5] for i in range(0, len(self._board_copy), 5)]
 
-    def get_color(word):
+  # get color of codenames word
+  def get_color(self, word):
       print(self._remaining_board)
-      if word in self._remaining_board: return '#FFFFFF'
+      if word in self._remaining_board: return '#F4EBD1'
       word = word.lower().replace(' ', '_')
       if word in self._assassin: return '#272727'
       elif word in self._team_copy: return '#40729B'
       elif word in self._opponents_copy: return '#C93B1E'
       elif word in self._neutral_copy: return '#CDC0AD'
 
-    html = "<table style='border-collapse: collapse;'>"
-    for row in grid:
-        html += "<tr>"
+  def get_board(self):
+      grid = [self._board_copy[i:i+5] for i in range(0, len(self._board_copy), 5)]
+      colored_grid = []
+      for row in grid:
+        colored_row = []
         for word in row:
-            color = get_color(word)
-            print(word, color)
-            html += (
-                f"<td style='width: 90px; height: 60px; border: 1px solid #ccc; "
-                f"padding: 10px; background-color: {color}; text-align: center; "
-                f"font-family: monospace; font-size: 14px;'>{word}</td>"
-            )
-        html += "</tr>"
-    html += "</table>"
+          color = self.get_color(word)
+          colored_row.append((word, color))
+        colored_grid.append(colored_row)
+      return colored_grid
 
-    return [i for i in self._remaining_board if i != '']
+    # print remaining cards in 5x5 grid (and return a list of cards)
+  def remaining_cards(self):
+      # convert to grid format and print
+      return [i for i in self._remaining_board if i != '']
 
   # choose which cards to create a clue for, based on a safety threshhold
   def _clue_words(self, my_team=True):
-    # loop through all words to find an initial pair
-    highest_sim = -1
-    highest_sim_word1 = None
-    highest_sim_word2 = None
+      # loop through all words to find an initial pair
+      highest_sim = -1
+      highest_sim_word1 = None
+      highest_sim_word2 = None
 
-    if my_team: possibilities = self._team
-    else: possibilities = self._opponents
+      if my_team: possibilities = self._team
+      else: possibilities = self._opponents
 
-    for teamword1 in possibilities:
-      for teamword2 in possibilities:
-        if teamword1 == teamword2: continue #skip if words are equal
-        # print(teamword1, teamword2, teamword1==teamword2)
-        curr_sim = model.wv.similarity(teamword1,teamword2)
-
-        # if pair has highest similarity, save them (unless words are identical)
-        if (curr_sim >= highest_sim) and (curr_sim != 1):
-          highest_sim = curr_sim
-          highest_sim_word1 = teamword1
-          highest_sim_word2 = teamword2
-    print(highest_sim, highest_sim_word1, highest_sim_word2)
-
-    # only choose this pair if above threshold
-    if highest_sim >= self._threshold:
-      clue_cards = [highest_sim_word1, highest_sim_word2]
-      # find similarity to other cards
-      for teamword in self._team:
-        # do not add multiple identical words!
-        if (teamword == highest_sim_word1) or (teamword == highest_sim_word2):
-          continue
-
-        # if both similarities are high, add the word to the clue set
-        similarity1 = model.wv.similarity(highest_sim_word1, teamword)
-        similarity2 = model.wv.similarity(highest_sim_word2, teamword)
-        print(teamword, similarity1, similarity2)
-        if (similarity1 >= self._threshold) and (similarity2 >= self._threshold):
-          clue_cards.append(teamword)
-
-    # if no pairs are above threshold, choose word least similar to everything else
-    else:
-      lowest_ave_sim = 100
-      lowest_sim_word = None
       for teamword1 in possibilities:
-        curr_ave = 0
+          for teamword2 in possibilities:
+              if teamword1 == teamword2: continue #skip if words are equal
+              # print(teamword1, teamword2, teamword1==teamword2)
+              curr_sim = model.wv.similarity(teamword1,teamword2)
 
-        # compare to all other team words
-        for teamword2 in possibilities:
-          if teamword1 == teamword2: continue #skip if words are equal
+              # if pair has highest similarity, save them (unless words are identical)
+              if (curr_sim >= highest_sim) and (curr_sim != 1):
+                  highest_sim = curr_sim
+                  highest_sim_word1 = teamword1
+                  highest_sim_word2 = teamword2
+      print(highest_sim, highest_sim_word1, highest_sim_word2)
 
-          curr_sim = model.wv.similarity(teamword1,teamword2)
-          curr_ave += curr_sim**2
+      # only choose this pair if above threshold
+      if highest_sim >= self._threshold:
+          clue_cards = [highest_sim_word1, highest_sim_word2]
+          # find similarity to other cards
+          for teamword in self._team:
+              # do not add multiple identical words!
+              if (teamword == highest_sim_word1) or (teamword == highest_sim_word2):
+                  continue
 
-        # find lowest sim
-        if (curr_ave <= lowest_ave_sim):
-          lowest_ave_sim = curr_ave
-          lowest_sim_word = teamword1
-      clue_cards = [lowest_sim_word]
-      # clue_cards = [random.choice(possibilities)]
+          # if both similarities are high, add the word to the clue set
+          similarity1 = model.wv.similarity(highest_sim_word1, teamword)
+          similarity2 = model.wv.similarity(highest_sim_word2, teamword)
+          print(teamword, similarity1, similarity2)
+          if (similarity1 >= self._threshold) and (similarity2 >= self._threshold):
+              clue_cards.append(teamword)
 
-    print(clue_cards)
-    return clue_cards
+      # if no pairs are above threshold, choose word least similar to everything else
+      else:
+        lowest_ave_sim = 100
+        lowest_sim_word = None
+        for teamword1 in possibilities:
+          curr_ave = 0
+
+          # compare to all other team words
+          for teamword2 in possibilities:
+            if teamword1 == teamword2: continue #skip if words are equal
+
+            curr_sim = model.wv.similarity(teamword1,teamword2)
+            curr_ave += curr_sim**2
+
+          # find lowest sim
+          if (curr_ave <= lowest_ave_sim):
+            lowest_ave_sim = curr_ave
+            lowest_sim_word = teamword1
+        clue_cards = [lowest_sim_word]
+        # clue_cards = [random.choice(possibilities)]
+
+      print(clue_cards)
+      return clue_cards
 
   # create a clue, based on the current board
   def get_clue(self):
