@@ -7,7 +7,7 @@
 Backend:
 
 - `cd backend`.
-- Run `pip install requirements.txt`.
+- Run `pip install -r requirements.txt`.
 - Run `python game.py` to start the backend (Flask) server.
 
 Frontend:
