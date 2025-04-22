@@ -9,9 +9,9 @@ function App() {
   const [opponentClue, setOpponentClue] = useState([]);
   const [guessNumber, setGuessNumber] = useState(1);
   const [guessMessage, setGuessMessage] = useState('');
-  const [stillPlaying, setStillPlaying] = useState(true);
   const [opponentPlaying, setOpponentPlaying] = useState(false);
   const [score, setScore] = useState({ player: 0, opponent: 0 });
+  const [winner, setWinner] = useState('');
 
   const getNewBoard = () => {
     fetch('/api/getboard')
@@ -100,10 +100,10 @@ function App() {
         setGuessNumber(1);
         setGuessMessage('');
         setSelectedWord([]);
-        setStillPlaying(true);
         getClue();
         setOpponentClue([]);
         setOpponentPlaying(false);
+        setWinner('');
       })
       .catch((error) => {
         console.error('Error resetting game:', error);
@@ -122,7 +122,6 @@ function App() {
 
   const handleSkipGuess = () => {
     setSelectedWord([]);
-    getClue();
     setGuessNumber(1);
     setGuessMessage('');
     setOpponentPlaying(true);
@@ -150,6 +149,20 @@ function App() {
       });
   };
 
+  const checkGameOver = () => {
+    fetch('/api/gameover')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.game_over) {
+          setOpponentPlaying(false);
+          setWinner(data.winner);
+        }
+      })
+      .catch((error) => {
+        console.error('Error checking game over:', error);
+      });
+  };
+
   useEffect(() => {
     getNewBoard();
     getDropdownWords();
@@ -161,8 +174,10 @@ function App() {
   }, [opponentClue]);
 
   useEffect(() => {
-    if (guessMessage.includes('assassin') || opponentClue[2]?.includes('assassin')) {
-      setStillPlaying(false);
+    if (guessMessage.includes('assassin')) {
+      setWinner('You');
+    } else if (opponentClue[2]?.includes('assassin')) {
+      setWinner('Opponent');
     }
     if (guessMessage.includes('turn is over')) {
       setOpponentPlaying(true);
@@ -171,6 +186,7 @@ function App() {
 
   useEffect(() => {
     getScore();
+    checkGameOver();
   }, [gameBoard]);
 
   return (
@@ -204,13 +220,14 @@ function App() {
             ))}
           </div>
           <div className="flex flex-col gap-4">
-            {stillPlaying && opponentClue.length == 0 && (
+            {!winner && opponentClue.length == 0 && (
               <div className="text-2xl flex flex-col font-semibold gap-2 w-64">
-                <p>Your Clue: {clue[0]?.toUpperCase()}</p>
-                <p>Number of Words: {clue[1]}</p>
+                <p>
+                  Your Clue: {clue[0]?.toUpperCase()}, {clue[1]}
+                </p>
               </div>
             )}
-            {stillPlaying && !opponentPlaying && opponentClue.length == 0 && (
+            {!winner && !opponentPlaying && opponentClue.length == 0 && (
               <div className="flex flex-col gap-2 w-64">
                 <div className="flex w-64 items-center">
                   <p className="text-xl">
@@ -237,21 +254,16 @@ function App() {
                 </button>
               </div>
             )}
-            {opponentPlaying && (
-              <button
-                className="w-64 bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
-                onClick={handleOpponentPlay}
-              >
-                Let computer play
-              </button>
-            )}
-            {stillPlaying && opponentClue.length !== 0 && (
+            {!winner && opponentClue.length !== 0 && (
               <div className="flex flex-col gap-2 w-64">
                 <p className="text-2xl font-semibold">
-                  Opponent Clue: {opponentClue[0]?.toUpperCase()}
+                  Opponent Clue: {opponentClue[0]?.toUpperCase()}, {opponentClue[1]}
                 </p>
-                <p className="text-2xl font-semibold">Number of Words: {opponentClue[1]}</p>
-                <p className="text-md font-medium w-64">{opponentClue[2]}</p>
+                {opponentClue[2].split('\n').map((line, idx) => (
+                  <p className="text-md font-medium w-64" key={idx}>
+                    {line}
+                  </p>
+                ))}
                 <button
                   className="bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
                   onClick={handleMyTurn}
@@ -261,6 +273,19 @@ function App() {
               </div>
             )}
             {opponentClue.length == 0 && <p className="text-md font-medium w-64">{guessMessage}</p>}
+            {opponentPlaying && (
+              <button
+                className="w-64 bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
+                onClick={handleOpponentPlay}
+              >
+                Let computer play
+              </button>
+            )}
+            {winner && (
+              <div className="text-xl font-semibold w-64">
+                {'🏆 ' + winner} {winner == 'COMPUTER' ? 'WINS!' : 'WIN!'}
+              </div>
+            )}
             {
               <button
                 className="bg-orange-500 rounded-md py-2 px-2 cursor-pointer font-medium"

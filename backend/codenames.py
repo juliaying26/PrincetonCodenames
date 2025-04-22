@@ -57,12 +57,12 @@ class CodenamesBoard:
 
     # check assassin
     if self.assassin_chooser != None:
-      if self.assassin_chooser == 'COMPUTER': return 'TEAM'
-      elif self.assassin_chooser == 'TEAM': return 'COMPUTER'
+      if self.assassin_chooser == 'COMPUTER': return 'YOU'
+      elif self.assassin_chooser == 'YOU': return 'COMPUTER'
     
     # otherwise compare scores
     team_score, opp_score = self.get_score()
-    if team_score < opp_score: return 'TEAM'
+    if team_score < opp_score: return 'YOU'
     else: return 'COMPUTER'
 
   # get color of codenames word
@@ -251,7 +251,7 @@ class CodenamesBoard:
     
     # handle assassin case
     elif lower_guess in self._assassin:
-      msg += f'GAME OVER ({guess} was the assassin): COMPUTER WINS\n'
+      msg += f'GAME OVER ({guess} was the assassin)\n'
       self.game_over = True
       self.assassin_chooser = 'TEAM'
       return msg
@@ -323,24 +323,24 @@ class CodenamesBoard:
         self._team.remove(lower_guess)
         if len(self._team) == 0: self.game_over = True
         # print(f'{guess} was a word for YOUR team!')
-        msg += f'{guess} was a word for YOUR team!\n'
+        msg += f'Guess {i+1}: {guess} was a word for YOUR team!\n'
         break
       # handle opponent case
       elif lower_guess in self._opponents:
         self._opponents.remove(lower_guess)
         if len(self._opponents) == 0: self.game_over = True
         # print(f'{guess} was correct!')
-        msg += f'{guess} was correct!\n'
+        msg += f'Guess {i+1}: {guess} was correct!\n'
       # handle neutral case
       elif lower_guess in self._neutral:
         # print(f'{guess} was a bystander!')
-        msg += f'{guess} was a bystander!\n'
+        msg += f'Guess {i+1}: {guess} was a bystander!\n'
         self._neutral.remove(lower_guess)
         break
       # handle assassin case
       elif lower_guess in self._assassin:
         # print(f'GAME OVER (assassin found): YOU WIN')
-        msg += f'GAME OVER (assassin found): YOU WIN\n'
+        msg += f'Guess {i+1}: GAME OVER ({lower_guess.upper()} was the assassin)\n'
         self.game_over = True
         self.assassin_chooser = 'COMPUTER'
         break

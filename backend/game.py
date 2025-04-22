@@ -9,7 +9,6 @@ board = codenames.CodenamesBoard(0.25)
 rounds = 2
 curr_round = 0
 session_id = str(uuid.uuid4())
-log = ""
 
 # # Initialize persistent log display
 # display(HTML("""
@@ -19,13 +18,8 @@ log = ""
 # </div>
 # """))
 
-def append_to_log(message):
-    global log
-    log += message + "\n"
-
 def game_over():
     if board.game_over:
-        append_to_log("<b style='color:red;'>Game Over!</b>")
         return True
     return False
 
@@ -37,7 +31,7 @@ def turn_over(guess_number, msg):
     return False
 
 def extra_guess(guess_number, msg):
-    if not turn_over(guess_number, msg) and board.num_guesses == guess_number:
+    if not game_over() and 'assassin' not in msg and not turn_over(guess_number, msg) and board.num_guesses == guess_number:
         return True
 
 @app.route('/api/getboard', methods=['GET'])
@@ -56,14 +50,8 @@ def guess_word():
     data = request.get_json()
     guess = data.get('word')
     guess_number = data.get('guess_number')
-
-    if game_over():
-        winner = board.winner()
-        return jsonify({"game_over": True, "winner": winner})
     
-    append_to_log(f"<p>Your guesses: {guess}</p>")
     msg = board.team_guesses(guess)
-    append_to_log(msg)
     if extra_guess(guess_number, msg):
         return jsonify({"message": msg + "\n" + "You get an extra guess!"})
     if turn_over(guess_number, msg):
@@ -74,16 +62,10 @@ def guess_word():
 
 @app.route('/api/opponentplay', methods=['POST'])
 def opponent_play():
-    if game_over():
-        winner = board.winner()
-        return jsonify({"game_over": True, "winner": winner})
-    
     clue, clue_size = board.opponent_get_clue()
     clue = clue.replace('_', ' ')
-    append_to_log(f'Clue: <i>{clue}</i>, {clue_size} (up to {clue_size+1} guesses)')
     msg = board.opponent_guess(clue, clue_size)
     print(msg)
-    append_to_log(msg)
     return jsonify({"message": msg, "clue": clue, "clue_size": clue_size})
 
 @app.route('/api/getclue', methods=["GET"])
@@ -100,6 +82,14 @@ def reset_game():
     session_id = str(uuid.uuid4())
     log = ""
     return jsonify({"message": "Game reset successfully."})
+
+@app.route('/api/gameover', methods=["GET"])
+def game_over_status():
+    if game_over():
+        winner = board.winner()
+        return jsonify({"game_over": True, "winner": winner})
+    else:
+        return jsonify({"game_over": False})
 
 @app.route('/api/getscore', methods=["GET"])
 def get_score():
