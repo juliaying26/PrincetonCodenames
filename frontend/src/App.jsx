@@ -46,7 +46,10 @@ function App() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ word: selectedWord[0].value }),
+      body: JSON.stringify({
+        word: selectedWord[0].value,
+        guess_number: guessNumber,
+      }),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -117,6 +120,14 @@ function App() {
     getClue();
   };
 
+  const handleSkipGuess = () => {
+    setSelectedWord([]);
+    getClue();
+    setGuessNumber(1);
+    setGuessMessage('');
+    setOpponentPlaying(true);
+  };
+
   const getClue = () => {
     fetch('/api/getclue')
       .then((response) => response.json())
@@ -150,7 +161,7 @@ function App() {
   }, [opponentClue]);
 
   useEffect(() => {
-    if (guessMessage.includes('assassin')) {
+    if (guessMessage.includes('assassin') || opponentClue[2]?.includes('assassin')) {
       setStillPlaying(false);
     }
     if (guessMessage.includes('turn is over')) {
@@ -195,22 +206,31 @@ function App() {
           <div className="flex flex-col gap-4">
             {stillPlaying && opponentClue.length == 0 && (
               <div className="text-2xl flex flex-col font-semibold gap-2 w-64">
-                <p>Clue: {clue[0]?.toUpperCase()}</p>
+                <p>Your Clue: {clue[0]?.toUpperCase()}</p>
                 <p>Number of Words: {clue[1]}</p>
               </div>
             )}
             {stillPlaying && !opponentPlaying && opponentClue.length == 0 && (
               <div className="flex flex-col gap-2 w-64">
-                <p className="text-xl">
-                  Guess {guessNumber}/{clue[1]}:
-                </p>
+                <div className="flex w-64 items-center">
+                  <p className="text-xl">
+                    Guess {guessNumber}/
+                    {guessMessage.includes('extra guess') ? Number(clue[1]) + 1 : clue[1]}:
+                  </p>
+                  <button
+                    className="ml-auto bg-white border-orange-500 border-2 rounded-md py-1 px-2 cursor-pointer font-medium"
+                    onClick={handleSkipGuess}
+                  >
+                    Skip guess
+                  </button>
+                </div>
                 <Dropdown
                   options={dropdownWords}
                   selected={selectedWord}
                   setSelected={setSelectedWord}
                 />
                 <button
-                  className="bg-orange-500 rounded-md py-2 px-2 cursor-pointer font-medium"
+                  className=" bg-orange-500 rounded-md py-2 px-2 cursor-pointer font-medium"
                   onClick={handleGuessWord}
                 >
                   Guess Word!
@@ -225,7 +245,7 @@ function App() {
                 Let computer play
               </button>
             )}
-            {opponentClue.length !== 0 && (
+            {stillPlaying && opponentClue.length !== 0 && (
               <div className="flex flex-col gap-2 w-64">
                 <p className="text-2xl font-semibold">
                   Opponent Clue: {opponentClue[0]?.toUpperCase()}

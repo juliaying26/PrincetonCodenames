@@ -32,11 +32,15 @@ def game_over():
     return False
 
 def turn_over(guess_number, msg):
-    if board.num_guesses == guess_number:
+    if guess_number > board.num_guesses:
         return True
-    elif "opposing" in msg or "bystander" in msg:
+    if "opposing" in msg or "bystander" in msg:
         return True
     return False
+
+def extra_guess(guess_number, msg):
+    if not turn_over(guess_number, msg) and board.num_guesses == guess_number:
+        return True
 
 @app.route('/api/getboard', methods=['GET'])
 def get_board():
@@ -61,6 +65,8 @@ def guess_word():
     append_to_log(f"<p>Your guesses: {guess}</p>")
     msg = board.team_guesses(guess)
     append_to_log(msg)
+    if extra_guess(guess_number, msg):
+        return jsonify({"message": msg + "\n" + "You get an extra guess!"})
     if turn_over(guess_number, msg):
         return jsonify({"message": msg + "\n" + "Your turn is over. Please wait for the other team to play."})
     
@@ -73,10 +79,9 @@ def opponent_play():
         return jsonify({"game_over": True})
     
     clue, clue_size = board.opponent_get_clue()
-    clue.replace('_', ' ')
+    clue = clue.replace('_', ' ')
     append_to_log(f'Clue: <i>{clue}</i>, {clue_size} (up to {clue_size+1} guesses)')
     msg = board.opponent_guess(clue, clue_size)
-    msg.replace("! ", "!\n")
     print(msg)
     append_to_log(msg)
     return jsonify({"message": msg, "clue": clue, "clue_size": clue_size})
@@ -84,7 +89,7 @@ def opponent_play():
 @app.route('/api/getclue', methods=["GET"])
 def get_clue():
     clue, clue_size = board.get_clue()
-    clue.replace('_', ' ')
+    clue = clue.replace('_', ' ')
     return jsonify({"clue": clue, "clue_size": clue_size})
 
 @app.route('/api/resetgame', methods=["POST"])
