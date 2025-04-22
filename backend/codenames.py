@@ -33,9 +33,12 @@ class CodenamesBoard:
     # shuffle to choose assassin, teams, etc
     random.shuffle(chosen_words)
     self._assassin = chosen_words[0:1] # worst word (ends game in a loss)
+    print(self._assassin)
     self._team = chosen_words[1:10] # all 9 remaining words for this team
     self._opponents = chosen_words[10:18] # all 8 remaining words for opponent's team
     self._neutral = chosen_words[18:25] # all remaining neutral words
+    print("TEAM", self._team)
+    print("OPPONENTS", self._opponents)
 
     self._team_copy = self._team.copy()
     self._opponents_copy = self._opponents.copy()
@@ -57,8 +60,9 @@ class CodenamesBoard:
 
     # check assassin
     if self.assassin_chooser != None:
+      print(self.assassin_chooser)
       if self.assassin_chooser == 'COMPUTER': return 'YOU'
-      elif self.assassin_chooser == 'YOU': return 'COMPUTER'
+      elif self.assassin_chooser == 'TEAM': return 'COMPUTER'
     
     # otherwise compare scores
     team_score, opp_score = self.get_score()
@@ -67,7 +71,6 @@ class CodenamesBoard:
 
   # get color of codenames word
   def get_color(self, word):
-      print(self._remaining_board)
       if word in self._remaining_board: return '#F4EBD1'
       word = word.lower().replace(' ', '_')
       if word in self._assassin: return '#272727'
@@ -254,6 +257,7 @@ class CodenamesBoard:
       msg += f'GAME OVER ({guess} was the assassin)\n'
       self.game_over = True
       self.assassin_chooser = 'TEAM'
+      print(self.assassin_chooser)
       return msg
     
     return msg

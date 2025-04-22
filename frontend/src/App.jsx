@@ -12,6 +12,7 @@ function App() {
   const [opponentPlaying, setOpponentPlaying] = useState(false);
   const [score, setScore] = useState({ player: 0, opponent: 0 });
   const [winner, setWinner] = useState('');
+  const [roundNumber, setRoundNumber] = useState(1);
 
   const getNewBoard = () => {
     fetch('/api/getboard')
@@ -104,6 +105,7 @@ function App() {
         setOpponentClue([]);
         setOpponentPlaying(false);
         setWinner('');
+        setRoundNumber(1);
       })
       .catch((error) => {
         console.error('Error resetting game:', error);
@@ -117,6 +119,7 @@ function App() {
     setGuessMessage('');
     setSelectedWord([]);
     getDropdownWords();
+    setRoundNumber((prev) => prev + 1);
     getClue();
   };
 
@@ -149,20 +152,6 @@ function App() {
       });
   };
 
-  const checkGameOver = () => {
-    fetch('/api/gameover')
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.game_over) {
-          setOpponentPlaying(false);
-          setWinner(data.winner);
-        }
-      })
-      .catch((error) => {
-        console.error('Error checking game over:', error);
-      });
-  };
-
   useEffect(() => {
     getNewBoard();
     getDropdownWords();
@@ -175,9 +164,7 @@ function App() {
 
   useEffect(() => {
     if (guessMessage.includes('assassin')) {
-      setWinner('You');
-    } else if (opponentClue[2]?.includes('assassin')) {
-      setWinner('Opponent');
+      setWinner('COMPUTER');
     }
     if (guessMessage.includes('turn is over')) {
       setOpponentPlaying(true);
@@ -185,9 +172,23 @@ function App() {
   }, [guessMessage]);
 
   useEffect(() => {
+    if (opponentClue[2]?.includes('assassin')) {
+      setWinner('YOU');
+    }
+  }, [opponentClue]);
+
+  useEffect(() => {
     getScore();
-    checkGameOver();
   }, [gameBoard]);
+
+  useEffect(() => {
+    if (score.player == 9) {
+      setWinner('YOU');
+    }
+    if (score.opponent == 8) {
+      setWinner('COMPUTER');
+    }
+  }, [score]);
 
   return (
     <>
@@ -220,6 +221,7 @@ function App() {
             ))}
           </div>
           <div className="flex flex-col gap-4">
+            <div className="text-2xl font-bold w-64">Round {roundNumber}</div>
             {!winner && opponentClue.length == 0 && (
               <div className="text-2xl flex flex-col font-semibold gap-2 w-64">
                 <p>
@@ -254,22 +256,26 @@ function App() {
                 </button>
               </div>
             )}
-            {!winner && opponentClue.length !== 0 && (
+            {opponentClue.length !== 0 && (
               <div className="flex flex-col gap-2 w-64">
-                <p className="text-2xl font-semibold">
-                  Opponent Clue: {opponentClue[0]?.toUpperCase()}, {opponentClue[1]}
-                </p>
+                {!winner && (
+                  <p className="text-2xl font-semibold">
+                    Opponent Clue: {opponentClue[0]?.toUpperCase()}, {opponentClue[1]}
+                  </p>
+                )}
                 {opponentClue[2].split('\n').map((line, idx) => (
                   <p className="text-md font-medium w-64" key={idx}>
                     {line}
                   </p>
                 ))}
-                <button
-                  className="bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
-                  onClick={handleMyTurn}
-                >
-                  Back to your turn
-                </button>
+                {!winner && (
+                  <button
+                    className="bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
+                    onClick={handleMyTurn}
+                  >
+                    Back to your turn
+                  </button>
+                )}
               </div>
             )}
             {opponentClue.length == 0 && (
@@ -277,7 +283,7 @@ function App() {
                 {guessMessage && 'Guess ' + (guessNumber - 1) + ': ' + guessMessage}
               </p>
             )}
-            {opponentPlaying && (
+            {!winner && opponentPlaying && (
               <button
                 className="w-64 bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
                 onClick={handleOpponentPlay}

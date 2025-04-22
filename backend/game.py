@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request, jsonify, send_from_directory, abort
+from flask import Flask, request, jsonify, send_from_directory
 import codenames
 import setup
 import uuid
@@ -6,17 +6,7 @@ import uuid
 app = Flask(__name__, template_folder='../frontend', static_folder='../frontend/dist')
 
 board = codenames.CodenamesBoard(0.25)
-rounds = 2
-curr_round = 0
 session_id = str(uuid.uuid4())
-
-# # Initialize persistent log display
-# display(HTML("""
-# <div id="game-area">
-#   <div id="log" style="font-family:monospace; white-space:pre-wrap; padding:10px; background:#f9f9f9; border:1px solid #ddd; border-radius:8px; margin-bottom:20px;"></div>
-#   <div id="input-area"></div>
-# </div>
-# """))
 
 def game_over():
     if board.game_over:
@@ -24,10 +14,11 @@ def game_over():
     return False
 
 def turn_over(guess_number, msg):
-    if guess_number > board.num_guesses:
-        return True
-    if "opposing" in msg or "bystander" in msg:
-        return True
+    if not game_over() and 'assassin' not in msg:
+        if guess_number > board.num_guesses:
+            return True
+        if "opposing" in msg or "bystander" in msg:
+            return True
     return False
 
 def extra_guess(guess_number, msg):
@@ -45,8 +36,6 @@ def get_dropdown_options():
 
 @app.route('/api/guessword', methods=['POST'])
 def guess_word():
-    global curr_round
-
     data = request.get_json()
     guess = data.get('word')
     guess_number = data.get('guess_number')
@@ -57,14 +46,13 @@ def guess_word():
     if turn_over(guess_number, msg):
         return jsonify({"message": msg + "\n" + "Your turn is over. Please wait for the other team to play."})
     
-    curr_round += 1
     return jsonify({"message": msg})
 
 @app.route('/api/opponentplay', methods=['POST'])
 def opponent_play():
     clue, clue_size = board.opponent_get_clue()
-    clue = clue.replace('_', ' ')
     msg = board.opponent_guess(clue, clue_size)
+    clue = clue.replace('_', ' ')
     print(msg)
     return jsonify({"message": msg, "clue": clue, "clue_size": clue_size})
 
@@ -76,20 +64,10 @@ def get_clue():
 
 @app.route('/api/resetgame', methods=["POST"])
 def reset_game():
-    global board, curr_round, session_id, log
+    global board, session_id
     board = codenames.CodenamesBoard(0.25)
-    curr_round = 0
     session_id = str(uuid.uuid4())
-    log = ""
     return jsonify({"message": "Game reset successfully."})
-
-@app.route('/api/gameover', methods=["GET"])
-def game_over_status():
-    if game_over():
-        winner = board.winner()
-        return jsonify({"game_over": True, "winner": winner})
-    else:
-        return jsonify({"game_over": False})
 
 @app.route('/api/getscore', methods=["GET"])
 def get_score():
