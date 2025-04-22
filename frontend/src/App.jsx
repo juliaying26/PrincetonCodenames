@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Dropdown from './Dropdown.jsx';
+import Button from './Button.jsx';
 
 function App() {
   const [gameBoard, setGameBoard] = useState([]);
@@ -13,6 +14,8 @@ function App() {
   const [score, setScore] = useState({ player: 0, opponent: 0 });
   const [winner, setWinner] = useState('');
   const [roundNumber, setRoundNumber] = useState(1);
+  const [previousBoard, setPreviousBoard] = useState([]);
+  const [flippingTiles, setFlippingTiles] = useState([]);
 
   const getNewBoard = () => {
     fetch('/api/getboard')
@@ -96,6 +99,7 @@ function App() {
     })
       .then((response) => response.json())
       .then(() => {
+        setPreviousBoard([]);
         getNewBoard();
         getDropdownWords();
         setGuessNumber(1);
@@ -182,6 +186,27 @@ function App() {
   }, [gameBoard]);
 
   useEffect(() => {
+    if (previousBoard.length === 0) {
+      setPreviousBoard(gameBoard);
+      return;
+    }
+
+    const flips = gameBoard.flat().map(([word, color], index) => {
+      const [_, prevColor] = previousBoard.flat()[index] || [];
+      return color !== prevColor;
+    });
+
+    setFlippingTiles(flips);
+    setPreviousBoard(gameBoard);
+
+    const timeout = setTimeout(() => {
+      setFlippingTiles(gameBoard.flat().map(() => false));
+    }, 500); // match animation duration
+
+    return () => clearTimeout(timeout);
+  }, [gameBoard]);
+
+  useEffect(() => {
     if (score.player == 9) {
       setWinner('YOU');
     }
@@ -204,19 +229,30 @@ function App() {
           <div className="flex flex-col gap-5 items-center justify-center text-center">
             {gameBoard.map((row, rowIndex) => (
               <div className="flex gap-5 items-center justify-center" key={rowIndex}>
-                {row.map(([word, color], colIndex) => (
-                  <div
-                    key={colIndex}
-                    className="rounded-xl flex w-50 h-28 border border-gray-300 p-2 items-center justify-center text-xl font-semibold"
-                    style={{
-                      backgroundColor: color,
-                    }}
-                  >
-                    <div className="flex rounded-xl bg-white py-3 w-44 items-center justify-center">
-                      {word}
+                {row.map(([word, color], colIndex) => {
+                  const index = rowIndex * 5 + colIndex;
+                  const isFlipping = flippingTiles[index];
+
+                  return (
+                    <div
+                      key={colIndex}
+                      className={`transition-transform duration-500 transform ${
+                        isFlipping ? 'rotate-x-180' : ''
+                      }`}
+                    >
+                      <div
+                        className="rounded-xl flex w-50 h-28 border border-[#DBBE6A] p-2 items-center justify-center text-xl font-semibold"
+                        style={{
+                          backgroundColor: color,
+                        }}
+                      >
+                        <div className="flex rounded-xl bg-white py-3 w-44 items-center justify-center">
+                          {word}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -236,24 +272,22 @@ function App() {
                     Guess {guessNumber}/
                     {guessMessage.includes('extra guess') ? Number(clue[1]) + 1 : clue[1]}:
                   </p>
-                  <button
-                    className="ml-auto bg-white border-orange-500 border-2 rounded-md py-1 px-2 cursor-pointer font-medium"
+                  <Button
+                    className="ml-auto border-orange-500  py-1"
+                    type="secondary"
                     onClick={handleSkipGuess}
                   >
                     Skip guess
-                  </button>
+                  </Button>
                 </div>
                 <Dropdown
                   options={dropdownWords}
                   selected={selectedWord}
                   setSelected={setSelectedWord}
                 />
-                <button
-                  className=" bg-orange-500 rounded-md py-2 px-2 cursor-pointer font-medium"
-                  onClick={handleGuessWord}
-                >
+                <Button type="primary" className="w-64 py-2" onClick={handleGuessWord}>
                   Guess Word!
-                </button>
+                </Button>
               </div>
             )}
             {opponentClue.length !== 0 && (
@@ -269,12 +303,9 @@ function App() {
                   </p>
                 ))}
                 {!winner && (
-                  <button
-                    className="bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
-                    onClick={handleMyTurn}
-                  >
+                  <Button type="secondary" className="w-64 py-2" onClick={handleMyTurn}>
                     Back to your turn
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -284,12 +315,9 @@ function App() {
               </p>
             )}
             {!winner && opponentPlaying && (
-              <button
-                className="w-64 bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
-                onClick={handleOpponentPlay}
-              >
+              <Button type="secondary" className="w-64 py-2" onClick={handleOpponentPlay}>
                 Let computer play
-              </button>
+              </Button>
             )}
             {winner && (
               <div className="text-xl font-semibold w-64">
@@ -297,12 +325,9 @@ function App() {
               </div>
             )}
             {
-              <button
-                className="bg-orange-500 rounded-md py-2 px-2 cursor-pointer font-medium"
-                onClick={resetGame}
-              >
+              <Button type="primary" className="w-64 py-2" onClick={resetGame}>
                 Restart Game
-              </button>
+              </Button>
             }
           </div>
         </div>
