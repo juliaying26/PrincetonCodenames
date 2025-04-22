@@ -4,3 +4,4 @@ SQLAlchemy
 python-dotenv
 gunicorn
 gensim
+nltk

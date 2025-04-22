@@ -1,6 +1,7 @@
 from ctypes import sizeof
 from gensim.models import Word2Vec
 import random
+from nltk.stem import PorterStemmer
 
 model = Word2Vec.load('assets/codenames.model')
 
@@ -42,7 +43,7 @@ class CodenamesBoard:
 
     # shuffle again so that the player cannot figure out which cards are which
     random.shuffle(chosen_words)
-    # self._full_board = chosen_words # all cards in game
+    self._remaining_board_lower = chosen_words # all cards in game
 
     # convert back to uppercase (format seen by player)
     for i in range(len(chosen_words)):
@@ -180,7 +181,31 @@ class CodenamesBoard:
 
     # choose clue with highest similarity that is alphabetic (with - or _)
     def _acceptable(clue_str):
-      return all(char.isalpha() or char in "-_" for char in clue_str)
+      # check if alphabetic
+      if not all(char.isalpha() or char in "-_" for char in clue_str): return False
+
+      # check if subset of target word
+      # stem word
+      ps = PorterStemmer()
+
+      # Normalize the clue
+      # clue = clue.lower().strip()
+      clue_stem = ps.stem(clue_str)
+
+      for word in self._remaining_board_lower:
+        # word = word.lower().strip()
+        word_stem = ps.stem(word)
+        
+        # Direct match or stemmed match
+        if clue_str == word or clue_stem == word_stem:
+            return False
+        
+        # Substring checks (optional, but useful to catch "sun" in "sunlight")
+        if clue_str in word or word in clue_str:
+            return False
+      # otherwise clue is fine
+      return True
+      
     for curr_clue, curr_freq in clues:
       if _acceptable(curr_clue):
         print(f'clue = {curr_clue}, {len(clue_cards)}')
