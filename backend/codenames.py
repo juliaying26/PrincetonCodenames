@@ -19,6 +19,7 @@ class CodenamesBoard:
   def __init__(self, threshold):
     self._threshold = threshold
     self.game_over = False
+    self.assassin_chooser = None
     self.num_guesses = 0
 
     # choose 25 words: 5 Princeton and 20 standard Codenames clues
@@ -49,6 +50,19 @@ class CodenamesBoard:
     self._remaining_board = chosen_words # all remaining cards in game
     self._board_copy = self._remaining_board.copy()
 
+  def winner(self):
+    # don't try to determine winner until game is over
+    if not self.game_over: return None
+
+    # check assassin
+    if self.assassin_chooser != None:
+      if self.assassin_chooser == 'COMPUTER': return 'TEAM'
+      elif self.assassin_chooser == 'TEAM': return 'COMPUTER'
+    
+    # otherwise compare scores
+    team_score, opp_score = self.get_score()
+    if team_score < opp_score: return 'TEAM'
+    else: return 'COMPUTER'
 
   # get color of codenames word
   def get_color(self, word):
@@ -190,12 +204,14 @@ class CodenamesBoard:
     # handle correct case
     if lower_guess in self._team:
       self._team.remove(lower_guess)
+      if len(self._team) == 0: self.game_over = True
       # print(f'{guess} was correct!')
       msg += f'{guess} was correct!\n'
 
     # handle opponent case
     elif lower_guess in self._opponents:
       self._opponents.remove(lower_guess)
+      if len(self._opponents) == 0: self.game_over = True
       # print(f'{guess} was for the opposing team!')
       msg += f'{guess} was for the opposing team!\n'
       # end round without checking other guesses
@@ -210,8 +226,9 @@ class CodenamesBoard:
     
     # handle assassin case
     elif lower_guess in self._assassin:
-      msg += f'GAME OVER (assassin found): COMPUTER WINS\n'
+      msg += f'GAME OVER ({guess} was the assassin): COMPUTER WINS\n'
       self.game_over = True
+      self.assassin_chooser = 'TEAM'
       return msg
     
     return msg
@@ -279,12 +296,14 @@ class CodenamesBoard:
       # handle correct case
       if lower_guess in self._team:
         self._team.remove(lower_guess)
+        if len(self._team) == 0: self.game_over = True
         # print(f'{guess} was a word for YOUR team!')
         msg += f'{guess} was a word for YOUR team!\n'
         break
       # handle opponent case
       elif lower_guess in self._opponents:
         self._opponents.remove(lower_guess)
+        if len(self._opponents) == 0: self.game_over = True
         # print(f'{guess} was correct!')
         msg += f'{guess} was correct!\n'
       # handle neutral case
@@ -298,6 +317,7 @@ class CodenamesBoard:
         # print(f'GAME OVER (assassin found): YOU WIN')
         msg += f'GAME OVER (assassin found): YOU WIN\n'
         self.game_over = True
+        self.assassin_chooser = 'COMPUTER'
         break
     print(msg)
     print(self._opponents)

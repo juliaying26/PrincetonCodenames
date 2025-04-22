@@ -23,9 +23,7 @@ def append_to_log(message):
     global log
     log += message + "\n"
 
-
 def game_over():
-    global curr_round
     if board.game_over:
         append_to_log("<b style='color:red;'>Game Over!</b>")
         return True
@@ -60,7 +58,8 @@ def guess_word():
     guess_number = data.get('guess_number')
 
     if game_over():
-        return jsonify({"game_over": True})
+        winner = board.winner()
+        return jsonify({"game_over": True, "winner": winner})
     
     append_to_log(f"<p>Your guesses: {guess}</p>")
     msg = board.team_guesses(guess)
@@ -76,7 +75,8 @@ def guess_word():
 @app.route('/api/opponentplay', methods=['POST'])
 def opponent_play():
     if game_over():
-        return jsonify({"game_over": True})
+        winner = board.winner()
+        return jsonify({"game_over": True, "winner": winner})
     
     clue, clue_size = board.opponent_get_clue()
     clue = clue.replace('_', ' ')
