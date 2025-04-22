@@ -19,6 +19,7 @@ class CodenamesBoard:
   def __init__(self, threshold):
     self._threshold = threshold
     self.game_over = False
+    self.num_guesses = 0
 
     # choose 25 words: 5 Princeton and 20 standard Codenames clues
     chosen_words = random.sample(codenames_words, 20) + random.sample(princeton_words, 5)
@@ -69,6 +70,9 @@ class CodenamesBoard:
           colored_row.append((word, color))
         colored_grid.append(colored_row)
       return colored_grid
+  
+  def get_score(self):
+    return 9 - len(self._team), 8 - len(self._opponents)
 
     # print remaining cards in 5x5 grid (and return a list of cards)
   def remaining_cards(self):
@@ -166,6 +170,7 @@ class CodenamesBoard:
     for curr_clue, curr_freq in clues:
       if _acceptable(curr_clue):
         print(f'clue = {curr_clue}, {len(clue_cards)}')
+        self.num_guesses = len(clue_cards)
         return curr_clue, len(clue_cards)
 
     return '', 0
@@ -187,6 +192,7 @@ class CodenamesBoard:
       self._team.remove(lower_guess)
       # print(f'{guess} was correct!')
       msg += f'{guess} was correct!\n'
+
     # handle opponent case
     elif lower_guess in self._opponents:
       self._opponents.remove(lower_guess)
@@ -205,7 +211,6 @@ class CodenamesBoard:
     # handle assassin case
     elif lower_guess in self._assassin:
       msg += f'GAME OVER (assassin found): COMPUTER WINS\n'
-      # print(f'GAME OVER (assassin found): COMPUTER WINS')
       self.game_over = True
       return msg
     
@@ -249,14 +254,14 @@ class CodenamesBoard:
 
     # sort all remaining cards by similarity to clue
     possibilities = []
-    for word in board._remaining_board:
+    for word in self._remaining_board:
       if word != '': possibilities.append(word)
     similarities = [model.wv.similarity(clue, word.lower().replace(' ', '_')) for word in possibilities]
     both = []
     for x, y in zip(possibilities, similarities):
         both.append((x, y))
     both = sorted(both, key=lambda element: element[1], reverse=True)
-
+    print(possibilities)
     msg = ''
     for i in range(clue_size):
       value = random.random()
@@ -267,7 +272,7 @@ class CodenamesBoard:
 
       # remove from remaining cards
       self._remaining_board = ['' if item == guess else item for item in self._remaining_board]
-
+      print(self._opponents)
       # check guess
       print(f'opponent guessed {guess}')
       lower_guess = guess.lower().replace(' ', '_')
@@ -294,9 +299,6 @@ class CodenamesBoard:
         msg += f'GAME OVER (assassin found): YOU WIN\n'
         self.game_over = True
         break
+    print(msg)
+    print(self._opponents)
     return msg
-
-# initialize board for this game, and view all of the cards
-board = CodenamesBoard(.25)
-board.get_clue()
-board.opponent_get_clue()

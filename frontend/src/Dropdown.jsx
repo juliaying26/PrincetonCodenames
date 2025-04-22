@@ -16,7 +16,7 @@ export default function Dropdown({ options, selected, setSelected }) {
         onChange={setSelected}
         placeholder="Guess a word"
         clearable
-        dropdownGap={12}
+        dropdownGap={0}
       />
     </div>
   );
