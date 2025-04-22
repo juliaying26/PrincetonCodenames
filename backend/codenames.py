@@ -62,7 +62,7 @@ class CodenamesBoard:
     
     # otherwise compare scores
     team_score, opp_score = self.get_score()
-    if team_score < opp_score: return 'YOU'
+    if team_score > opp_score: return 'YOU'
     else: return 'COMPUTER'
 
   # get color of codenames word
@@ -122,16 +122,16 @@ class CodenamesBoard:
           clue_cards = [highest_sim_word1, highest_sim_word2]
           # find similarity to other cards
           for teamword in self._team:
-              # do not add multiple identical words!
-              if (teamword == highest_sim_word1) or (teamword == highest_sim_word2):
-                  continue
+            # do not add multiple identical words!
+            if (teamword == highest_sim_word1) or (teamword == highest_sim_word2):
+              continue
 
-          # if both similarities are high, add the word to the clue set
-          similarity1 = model.wv.similarity(highest_sim_word1, teamword)
-          similarity2 = model.wv.similarity(highest_sim_word2, teamword)
-          print(teamword, similarity1, similarity2)
-          if (similarity1 >= self._threshold) and (similarity2 >= self._threshold):
-              clue_cards.append(teamword)
+            # if both similarities are high, add the word to the clue set
+            similarity1 = model.wv.similarity(highest_sim_word1, teamword)
+            similarity2 = model.wv.similarity(highest_sim_word2, teamword)
+            print(teamword, similarity1, similarity2)
+            if (similarity1 >= self._threshold) and (similarity2 >= self._threshold):
+                clue_cards.append(teamword)
 
       # if no pairs are above threshold, choose word least similar to everything else
       else:

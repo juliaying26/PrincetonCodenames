@@ -170,8 +170,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    console.log(opponentClue);
-  }, [opponentClue]);
+    console.log(winner);
+  }, [winner]);
 
   useEffect(() => {
     if (guessMessage.includes('assassin')) {
@@ -272,7 +272,11 @@ function App() {
                 </button>
               </div>
             )}
-            {opponentClue.length == 0 && <p className="text-md font-medium w-64">{guessMessage}</p>}
+            {opponentClue.length == 0 && (
+              <p className="text-md font-medium w-64">
+                {guessMessage && 'Guess ' + (guessNumber - 1) + ': ' + guessMessage}
+              </p>
+            )}
             {opponentPlaying && (
               <button
                 className="w-64 bg-white rounded-md py-2 px-2 cursor-pointer font-medium"
