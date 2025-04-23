@@ -296,7 +296,7 @@ class CodenamesBoard:
 
   # simulate opponent's round
   def opponent_guess(self, clue, clue_size):
-    accuracy = 0.8
+    accuracy = 0.9
 
     # sort all remaining cards by similarity to clue
     possibilities = []
