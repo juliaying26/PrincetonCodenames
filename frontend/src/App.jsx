@@ -18,7 +18,7 @@ function App() {
   const [flippingTiles, setFlippingTiles] = useState([]);
 
   const getNewBoard = () => {
-    fetch('/api/getboard')
+    fetch(`${import.meta.env.VITE_API_URL}/api/getboard`)
       .then((response) => response.json())
       .then((data) => {
         setGameBoard(data);
@@ -29,7 +29,7 @@ function App() {
   };
 
   const getDropdownWords = () => {
-    fetch('/api/getdropdownoptions')
+    fetch(`${import.meta.env.VITE_API_URL}/api/getdropdownoptions`)
       .then((response) => response.json())
       .then((data) => {
         setDropdownWords(data);
@@ -45,7 +45,7 @@ function App() {
       return;
     }
 
-    fetch('/api/guessword', {
+    fetch(`${import.meta.env.VITE_API_URL}/api/guessword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ function App() {
   };
 
   const handleOpponentPlay = () => {
-    fetch('/api/opponentplay', {
+    fetch(`${import.meta.env.VITE_API_URL}/api/opponentplay`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ function App() {
   };
 
   const resetGame = () => {
-    fetch('/api/resetgame', {
+    fetch(`${import.meta.env.VITE_API_URL}/api/resetgame`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ function App() {
   };
 
   const getClue = () => {
-    fetch('/api/getclue')
+    fetch(`${import.meta.env.VITE_API_URL}/api/getclue`)
       .then((response) => response.json())
       .then((data) => {
         setClue([data.clue, data.clue_size]);
@@ -146,7 +146,7 @@ function App() {
   };
 
   const getScore = () => {
-    fetch('/api/getscore')
+    fetch(`${import.meta.env.VITE_API_URL}/api/getscore`)
       .then((response) => response.json())
       .then((data) => {
         setScore({ player: data.player_score, opponent: data.opponent_score });

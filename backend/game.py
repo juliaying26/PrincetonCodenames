@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import codenames
 import setup
 import uuid
 
+
 app = Flask(__name__, template_folder='../frontend', static_folder='../frontend/dist')
+CORS(app)
 
 board = codenames.CodenamesBoard(0.25)
 session_id = str(uuid.uuid4())
