@@ -2,6 +2,10 @@
 
 ## Julia Ying & Nora Graves
 
+### Demo:
+
+Navigate to https://princetoncodenames.onrender.com/. It may take up to a minute to load if no one has been on the website in a while. Note that only one player may use the website at a time (if more than one player, all changes will show up on the website).
+
 ### Setup:
 
 Backend:
