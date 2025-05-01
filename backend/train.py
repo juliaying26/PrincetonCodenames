@@ -56,11 +56,13 @@ for word in model.wv.key_to_index:
 model.train(tokenized_sentences, total_examples=len(tokenized_sentences), epochs=5)
 
 
+# ## print word counts etc.
 # words and stuff
+# model = Word2Vec.load('assets/codenames.model')
 word_counts = Counter(text.split())
 
 # load new model
-# vector = model.wv['tiger_inn']
+lines = []
 with open('assets/princeton_words.txt') as f:
   princeton_words = f.read()
 
@@ -69,6 +71,10 @@ with open('assets/princeton_words.txt') as f:
     word = word.lower()
     if ' ' in word:
       word = word.replace(' ', '_')
-    print(word, word_counts[word])
+    lines.append(word + " " + str(word_counts[word]))
     similar = model.wv.most_similar(word)
-    print(similar)
+    lines.append(" ".join(str(item) for item in similar))
+
+with open("assets/princeton_word_counts.txt", 'w') as f:
+  for line in lines:
+    f.write(line + "\n")
