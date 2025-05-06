@@ -201,7 +201,7 @@ function App() {
 
     const timeout = setTimeout(() => {
       setFlippingTiles(gameBoard.flat().map(() => false));
-    }, 500); // match animation duration
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, [gameBoard]);
